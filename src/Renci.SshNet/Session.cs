@@ -82,6 +82,26 @@ namespace Renci.SshNet
         /// </remarks>
         private const int LocalChannelDataPacketSize = 1024*64;
 
+        private static int maxSimultaneousAuthenticationConnections = 3;
+
+        /// <summary>
+        /// Max number of simultaneous authentication connections (3 by default).
+        /// </summary>
+        public static int MaxSimultaneousAuthenticationConnections
+        {
+            get { return maxSimultaneousAuthenticationConnections; }
+            set 
+            { 
+                if (maxSimultaneousAuthenticationConnections == value)
+                {
+                    return;
+                }
+
+                maxSimultaneousAuthenticationConnections = value;
+                AuthenticationConnection = new SemaphoreLight(MaxSimultaneousAuthenticationConnections);
+            }
+        }
+
 #if FEATURE_REGEX_COMPILE
         private static readonly Regex ServerVersionRe = new Regex("^SSH-(?<protoversion>[^-]+)-(?<softwareversion>.+)( SP.+)?$", RegexOptions.Compiled);
 #else
@@ -94,8 +114,8 @@ namespace Renci.SshNet
         /// <remarks>
         /// Some server may restrict number to prevent authentication attacks
         /// </remarks>
-        private static readonly SemaphoreLight AuthenticationConnection = new SemaphoreLight(3);
-
+        private static SemaphoreLight AuthenticationConnection = new SemaphoreLight(MaxSimultaneousAuthenticationConnections);
+        
         /// <summary>
         /// Holds metada about session messages
         /// </summary>
